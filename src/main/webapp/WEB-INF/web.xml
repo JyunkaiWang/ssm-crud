@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <!--1、启动 Spring 容器-->
+    <!--
+    配置ContextLoaderListener, 加载Spring父容器 (父类的initWebApplicationContext()方法中)
+    可以从ServletContext中根据 WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE 这个key来找到Spring容器
+    -->
+    <context-param>
+        <!-- 指定Spring配置文件位置 -->
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:applicationContext.xml</param-value>
+    </context-param>
+    <!-- 该监听器将根据contextConfigLocation参数加载Spring配置文件, 初始化Spring应用上下文 -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <!--2、配置 Spring MVC 的前端控制器，拦截所有请求-->
+    <!--
+       配置DispatcherServlet, 加载Spring MVC子容器 (父类的initWebApplicationContext()方法中)
+       可以从ServletContext中根据 FrameworkServlet.SERVLET_CONTEXT_PREFIX+Servlet名称 作为key来找到Spring MVC容器
+    -->
+    <servlet>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <!-- 指定Spring MVC配置文件位置, 默认是 /WEB-INF/<servlet-name>-servlet.xml -->
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:spring-mvc.xml</param-value>
+        </init-param>
+        <!-- 随 Tomcat 一起启动 -->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DispatcherServlet</servlet-name>
+        <!-- / 接收所有请求, 除了jsp; /* 接收所有请求, 包括jsp -->
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!--3、配置过滤器-->
+    <!--配置字符编码过滤器，一定要放在所有过滤器之前，/* 表示拦截所有请求-->
+    <!-- 一定要放在最前面! -->
+    <filter>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <!-- 强制设置响应编码, 不强制设置请求编码(当请求中未指定编码时才设置) -->
+        <init-param>
+            <param-name>forceResponseEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- 配置HTTP方法过滤器, 实现REST风格的增删改查 -->
+    <!-- 该过滤器根据指定的请求参数(默认是"_method")来修改请求的类型 -->
+    <filter>
+        <filter-name>HiddenHttpMethodFilter</filter-name>
+        <filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>HiddenHttpMethodFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter>
+        <filter-name>FormContentFilter</filter-name>
+        <filter-class>org.springframework.web.filter.FormContentFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>FormContentFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+</web-app>
